@@ -1,6 +1,7 @@
-/* Styling for the injected note button */
+/* Styling for the injected note button on YouTube */
 #yt-note-btn {
   cursor: pointer;
+  /* color: #ff0000; */
   opacity: 0.9;
   transition: opacity 0.2s;
 }
@@ -11,4 +12,55 @@
 
 #yt-note-btn svg {
   pointer-events: none;
+}
+
+/* Floating button for other websites */
+.video-note-floating-btn {
+  position: fixed;
+  bottom: 80px;  /* Change this: distance from bottom (increase = move up, decrease = move down) */
+  right: 20px;   /* Change this: distance from right (increase = move left, decrease = move right) */
+  width: 56px;   /* Change this: button size */
+  height: 56px;  /* Change this: button size */
+  border-radius: 50%;
+  background: #ff0000;  /* Change this: button color (try #065fd4 for blue, #00ff00 for green) */
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.video-note-floating-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+
+.video-note-floating-btn:active {
+  transform: scale(0.95);
+}
+
+/* Notification */
+.video-note-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #323232;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1000000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+.video-note-notification.show {
+  opacity: 1;
+  transform: translateY(0);
 }

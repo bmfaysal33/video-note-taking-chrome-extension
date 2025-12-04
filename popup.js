@@ -12,57 +12,69 @@ let currentVideoId = null;
 // Get video ID from current tab
 async function getCurrentVideoId() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab.url || !tab.url.includes('youtube.com/watch')) {
-    return null;
+  if (!tab.url) return null;
+  
+  try {
+    // Ask content script for page info
+    const response = await chrome.tabs.sendMessage(tab.id, { action: 'getPageInfo' });
+    if (response && response.pageId && response.hasVideo) {
+      return response.pageId;
+    }
+  } catch (error) {
+    console.log('Could not get page info from content script');
   }
-  const url = new URL(tab.url);
-  return url.searchParams.get('v');
+  
+  return null;
 }
 
 // Open video in current or new tab
-async function openVideo(videoId) {
-  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+async function openVideo(pageId, pageUrl) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   
-  if (tab.url && tab.url.includes('youtube.com/watch')) {
-    // Update current tab
-    await chrome.tabs.update(tab.id, { url: videoUrl });
-  } else {
-    // Create new tab
-    await chrome.tabs.create({ url: videoUrl });
+  if (pageUrl) {
+    // Open the stored URL
+    if (tab.url && (tab.url.includes('youtube.com') || tab.url.includes('vimeo.com') || tab.url.includes('dailymotion.com'))) {
+      await chrome.tabs.update(tab.id, { url: pageUrl });
+    } else {
+      await chrome.tabs.create({ url: pageUrl });
+    }
   }
   
-  // Switch to notes view after opening
   setTimeout(() => {
-    currentVideoId = videoId;
+    currentVideoId = pageId;
     currentView = 'notes';
     renderNotes();
   }, 500);
 }
 
-// Get video title from YouTube API or metadata
-async function getVideoTitle(videoId) {
+// Get video title from stored data or page
+async function getVideoTitle(pageId) {
   try {
-    // Try to fetch from current tab if it's the same video
+    // Get from storage first
+    const result = await chrome.storage.local.get(pageId);
+    const notes = result[pageId];
+    if (notes && notes.length > 0 && notes[0].pageTitle) {
+      return notes[0].pageTitle;
+    }
+    
+    // Try to fetch from current tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab.url && tab.url.includes(videoId)) {
-      const result = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => {
-          const titleEl = document.querySelector('h1.ytd-watch-metadata yt-formatted-string');
-          return titleEl ? titleEl.textContent : null;
+    if (tab.url) {
+      try {
+        const response = await chrome.tabs.sendMessage(tab.id, { action: 'getPageInfo' });
+        if (response && response.pageTitle) {
+          return response.pageTitle;
         }
-      });
-      if (result && result[0] && result[0].result) {
-        return result[0].result;
+      } catch (error) {
+        console.log('Could not get title from tab');
       }
     }
   } catch (error) {
-    console.log('Could not fetch title from tab');
+    console.log('Could not fetch title');
   }
   
-  // Fallback to video ID
-  return `Video: ${videoId.substring(0, 8)}...`;
+  // Fallback
+  return `Video: ${pageId.substring(0, 15)}...`;
 }
 
 // Get all videos with notes
@@ -70,15 +82,29 @@ async function getAllVideosWithNotes() {
   const allData = await chrome.storage.local.get(null);
   const videos = [];
   
-  for (const [videoId, notes] of Object.entries(allData)) {
+  for (const [pageId, notes] of Object.entries(allData)) {
     if (Array.isArray(notes) && notes.length > 0) {
-      const title = await getVideoTitle(videoId);
+      const title = notes[0].pageTitle || await getVideoTitle(pageId);
+      const pageUrl = notes[0].pageUrl || '';
+      
+      // Get thumbnail based on site
+      let thumbnail = '';
+      if (pageId.startsWith('yt_')) {
+        const videoId = pageId.replace('yt_', '');
+        thumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      } else if (pageId.startsWith('vimeo_')) {
+        thumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 68"><rect fill="%2300adef" width="120" height="68"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="24" fill="white">Vimeo</text></svg>';
+      } else {
+        thumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 68"><rect fill="%23333" width="120" height="68"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="20" fill="white">Video</text></svg>';
+      }
+      
       videos.push({
-        videoId,
+        pageId,
         title,
+        pageUrl,
         noteCount: notes.length,
         lastModified: Math.max(...notes.map(n => new Date(n.createdAt).getTime())),
-        thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+        thumbnail
       });
     }
   }
@@ -158,7 +184,7 @@ async function renderNotes() {
   if (!videoId) {
     content.innerHTML = `
       <div class="not-youtube">
-        <p>Open a YouTube video to view notes.</p>
+        <p>Open a page with a video to view notes.</p>
         <p style="font-size: 12px; margin-top: 8px;">Or <a href="#" id="view-all-link" style="color: #065fd4;">view all videos with notes</a></p>
       </div>
     `;
@@ -342,11 +368,11 @@ async function renderDashboard() {
   videos.forEach(video => {
     const card = document.createElement('div');
     card.className = 'video-card';
-    card.dataset.videoId = video.videoId;
+    card.dataset.pageId = video.pageId;
     
     card.innerHTML = `
       <div class="video-card-header">
-        <img src="${video.thumbnail}" alt="Thumbnail" class="video-thumbnail" />
+        <img src="${video.thumbnail}" alt="Thumbnail" class="video-thumbnail" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 68%22><rect fill=%22%23333%22 width=%22120%22 height=%2268%22/></svg>'" />
         <div class="video-info">
           <div class="video-title-text">${video.title}</div>
           <div class="video-meta">
@@ -362,8 +388,8 @@ async function renderDashboard() {
     `;
     
     card.addEventListener('click', () => {
-      openVideo(video.videoId);
-      window.close(); // Close popup after opening video
+      openVideo(video.pageId, video.pageUrl);
+      window.close();
     });
     
     dashboard.appendChild(card);
