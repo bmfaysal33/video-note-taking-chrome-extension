@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 400px;
+      min-height: 300px;
+      max-height: 600px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f9f9f9;
+    }
+
+    .header {
+      background: #ff0000;
+      color: white;
+      padding: 16px;
+      font-weight: 600;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .header-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      padding: 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .header-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .header svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+
+    .container {
+      padding: 16px;
+    }
+
+    .video-title {
+      font-size: 13px;
+      color: #606060;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      fill: #ddd;
+      margin-bottom: 12px;
+    }
+
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .note-item {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      transition: box-shadow 0.2s;
+    }
+
+    .note-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .timestamp {
+      background: #065fd4;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .timestamp:hover {
+      background: #0450b4;
+    }
+
+    .note-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: #f0f0f0;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+      fill: #606060;
+    }
+
+    .btn.delete svg {
+      fill: #d32f2f;
+    }
+
+    .note-text {
+      font-size: 13px;
+      color: #333;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .note-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .note-input:focus {
+      outline: none;
+      border-color: #065fd4;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-save, .btn-cancel {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-save {
+      background: #065fd4;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #0450b4;
+    }
+
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-cancel:hover {
+      background: #d0d0d0;
+    }
+
+    .not-youtube {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    /* Dashboard styles */
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .video-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .video-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .video-card-header {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .video-thumbnail {
+      width: 120px;
+      height: 68px;
+      background: #000;
+      border-radius: 4px;
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+
+    .video-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .video-title-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #030303;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .video-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #606060;
+    }
+
+    .note-count {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .note-count svg {
+      width: 14px;
+      height: 14px;
+      fill: #606060;
+    }
+
+    .dashboard-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .dashboard-empty svg {
+      width: 64px;
+      height: 64px;
+      fill: #ddd;
+      margin-bottom: 16px;
+    }
+
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+
+    .back-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg viewBox="0 0 36 36">
+      <path d="M18,11 L18,17 L24,17 L24,19 L18,19 L18,25 L16,25 L16,19 L10,19 L10,17 L16,17 L16,11 Z M18,4 C10.268,4 4,10.268 4,18 C4,25.732 10.268,32 18,32 C25.732,32 32,25.732 32,18 C32,10.268 25.732,4 18,4 Z"></path>
+    </svg>
+    <span id="header-title">YouTube Video Notes</span>
+    <button id="toggle-view" class="header-btn" title="Toggle dashboard">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+      </svg>
+    </button>
+  </div>
+  
+  <div class="container">
+    <div id="content"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

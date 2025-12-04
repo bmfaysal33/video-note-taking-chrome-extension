@@ -1,0 +1,14 @@
+/* Styling for the injected note button */
+#yt-note-btn {
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+#yt-note-btn:hover {
+  opacity: 1;
+}
+
+#yt-note-btn svg {
+  pointer-events: none;
+}
