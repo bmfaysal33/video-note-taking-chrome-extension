@@ -255,7 +255,7 @@ function injectYouTubeButton() {
   noteBtn.className = 'ytp-button';
   noteBtn.title = 'Add note at current timestamp';
   noteBtn.innerHTML = `
-    <svg height="100%" version="1.1" viewBox="0 0 36 36" width="100%">
+    <svg height="90%" version="1.1" viewBox="11 4 40 40" width="100%">
       <path fill="#fff" d="M18,11 L18,17 L24,17 L24,19 L18,19 L18,25 L16,25 L16,19 L10,19 L10,17 L16,17 L16,11 Z M18,4 C10.268,4 4,10.268 4,18 C4,25.732 10.268,32 18,32 C25.732,32 32,25.732 32,18 C32,10.268 25.732,4 18,4 Z"></path>
     </svg>
   `;
