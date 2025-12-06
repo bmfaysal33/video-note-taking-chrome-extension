@@ -103,20 +103,34 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Create floating note button (for non-YouTube sites)
-function createFloatingButton() {
-  const existingBtn = document.getElementById('video-note-floating-btn');
+// Create integrated button for non-YouTube video players (like YouTube style)
+function createIntegratedButton() {
+  const existingBtn = document.getElementById('video-note-integrated-btn');
   if (existingBtn) return;
   
   const video = findVideoElement();
   if (!video) return;
   
+  // Find video container
+  let videoContainer = video.parentElement;
+  while (videoContainer && !videoContainer.querySelector('video')) {
+    videoContainer = videoContainer.parentElement;
+  }
+  
+  if (!videoContainer) {
+    videoContainer = video.parentElement;
+  }
+  
+  // Create button container
+  const btnContainer = document.createElement('div');
+  btnContainer.id = 'video-note-integrated-btn';
+  btnContainer.className = 'video-note-integrated-container';
+  
   const floatingBtn = document.createElement('button');
-  floatingBtn.id = 'video-note-floating-btn';
-  floatingBtn.className = 'video-note-floating-btn';
-  floatingBtn.title = 'Add note at current timestamp';
+  floatingBtn.className = 'video-note-integrated-btn';
+  floatingBtn.title = 'Add note at current timestamp (Alt+N)';
   floatingBtn.innerHTML = `
-    <svg viewBox="0 0 36 36" width="24" height="24">
+    <svg viewBox="0 0 36 36" width="36" height="36">
       <path fill="#fff" d="M18,11 L18,17 L24,17 L24,19 L18,19 L18,25 L16,25 L16,19 L10,19 L10,17 L16,17 L16,11 Z M18,4 C10.268,4 4,10.268 4,18 C4,25.732 10.268,32 18,32 C25.732,32 32,25.732 32,18 C32,10.268 25.732,4 18,4 Z"></path>
     </svg>
   `;
@@ -152,7 +166,55 @@ function createFloatingButton() {
     showNotification('Note timestamp saved!');
   });
   
-  document.body.appendChild(floatingBtn);
+  btnContainer.appendChild(floatingBtn);
+  videoContainer.appendChild(btnContainer);
+  
+  // Show/hide with video controls
+  let hideTimeout;
+  let isVisible = true;
+  
+  function showButton() {
+    btnContainer.classList.add('visible');
+    isVisible = true;
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => {
+      if (!video.paused) {
+        btnContainer.classList.remove('visible');
+        isVisible = false;
+      }
+    }, 2000);
+  }
+  
+  function hideButton() {
+    clearTimeout(hideTimeout);
+    btnContainer.classList.remove('visible');
+    isVisible = false;
+  }
+  
+  // Show button on mouse move over video
+  videoContainer.addEventListener('mousemove', showButton);
+  videoContainer.addEventListener('mouseenter', showButton);
+  videoContainer.addEventListener('mouseleave', hideButton);
+  
+  // Show when paused, hide when playing
+  video.addEventListener('play', () => {
+    hideTimeout = setTimeout(() => {
+      if (!isVisible) hideButton();
+    }, 2000);
+  });
+  
+  video.addEventListener('pause', showButton);
+  
+  // Show initially
+  showButton();
+  
+  // Keyboard shortcut Alt+N
+  document.addEventListener('keydown', (e) => {
+    if (e.altKey && e.key === 'n') {
+      e.preventDefault();
+      floatingBtn.click();
+    }
+  });
 }
 
 // Show notification
@@ -192,7 +254,11 @@ function injectYouTubeButton() {
   noteBtn.id = 'yt-note-btn';
   noteBtn.className = 'ytp-button';
   noteBtn.title = 'Add note at current timestamp';
-  noteBtn.innerHTML = `<img src="icons/plus.png" alt="">`;
+  noteBtn.innerHTML = `
+    <svg height="100%" version="1.1" viewBox="0 0 36 36" width="100%">
+      <path fill="#fff" d="M18,11 L18,17 L24,17 L24,19 L18,19 L18,25 L16,25 L16,19 L10,19 L10,17 L16,17 L16,11 Z M18,4 C10.268,4 4,10.268 4,18 C4,25.732 10.268,32 18,32 C25.732,32 32,25.732 32,18 C32,10.268 25.732,4 18,4 Z"></path>
+    </svg>
+  `;
   
   noteBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
@@ -234,8 +300,8 @@ function initializeExtension() {
       injectYouTubeButton();
     });
   } else {
-    // Other sites - create floating button
-    createFloatingButton();
+    // Other sites - create integrated button (YouTube style)
+    createIntegratedButton();
   }
 }
 

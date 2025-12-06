@@ -1,7 +1,12 @@
-// Format time as MM:SS
+// Format time as HH:MM:SS or MM:SS
 function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60);
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
+  
+  if (hrs > 0) {
+    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
@@ -93,9 +98,9 @@ async function getAllVideosWithNotes() {
         const videoId = pageId.replace('yt_', '');
         thumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
       } else if (pageId.startsWith('vimeo_')) {
-        thumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 68"><rect fill="%2300adef" width="120" height="68"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="24" fill="white">Vimeo</text></svg>';
+        thumbnail = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 68"%3E%3Crect fill="%2300adef" width="120" height="68"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="16" fill="white"%3EVimeo%3C/text%3E%3C/svg%3E';
       } else {
-        thumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 68"><rect fill="%23333" width="120" height="68"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="20" fill="white">Video</text></svg>';
+        thumbnail = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 68"%3E%3Crect fill="%23333" width="120" height="68"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="16" fill="white"%3EVideo%3C/text%3E%3C/svg%3E';
       }
       
       videos.push({
@@ -372,7 +377,7 @@ async function renderDashboard() {
     
     card.innerHTML = `
       <div class="video-card-header">
-        <img src="${video.thumbnail}" alt="Thumbnail" class="video-thumbnail" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 68%22><rect fill=%22%23333%22 width=%22120%22 height=%2268%22/></svg>'" />
+        <img src="${video.thumbnail}" alt="Thumbnail" class="video-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 68%22%3E%3Crect fill=%22%23333%22 width=%22120%22 height=%2268%22/%3E%3C/svg%3E'" />
         <div class="video-info">
           <div class="video-title-text">${video.title}</div>
           <div class="video-meta">
